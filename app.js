@@ -1,13 +1,9 @@
 const express = require('express')
-
 const { sequelize } = require('./models')
 
-async function main(){
-    await sequelize.sync()
-}
-
-main()
 const userRoutes = require('./routes/user');
+const postRoutes = require('./routes/post');
+
 const app = express();
 
 app.use((req, res, next) => {
@@ -20,11 +16,12 @@ app.use((req, res, next) => {
 app.use(express.json());
 
 app.use('/auth', userRoutes);
+app.use('/post', postRoutes)
 
 app.listen({port: 5000}, async () => {
-    console.log('listening to port:5000')
-    await sequelize.sync()
-    console.log('Database Synced')
+    console.log('Server up on http://localhost:5000')
+    await sequelize.authenticate()
+    console.log('Database Connected!')
 })
 
 module.exports = app;

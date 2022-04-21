@@ -2,8 +2,6 @@ const { User } = require('../models');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
-
-
 exports.signup = (req, res, next) => {
     const { firstName, lastName, email, rank } = req.body
     bcrypt.hash(req.body.password, 10)
@@ -13,7 +11,7 @@ exports.signup = (req, res, next) => {
             firstName,
             lastName,
             rank,
-            password: hash
+            password: hash,
         })
         .then(()=> res.status(201).json({ message: 'nouvel utilisateur ajouté !'}))
         .catch(error => res.status(400).json({ error }))
@@ -22,26 +20,79 @@ exports.signup = (req, res, next) => {
 };
 
 exports.login = ( req, res, next) => {
-    User.findOne({ email: req.body.email })
+    User.findOne({ where: { email: req.body.email } })
     .then( user => {
         if(!user) {
-            return res.status(401)({ error: 'Utilisateur non trouvé !'})
+            return res.status(401)({ msg: 'Utilisateur non trouvé !'})
         }
         bcrypt.compare(req.body.password, user.password)
-            .then(valid => {
+            .then( valid => {
                 if (!valid) {
-                    return res.status(401)({ error: 'Mot de passe non valide !'})
+                    return res.status(401)({ msg: 'Mot de passe non valide !'})
                 }
                 res.status(200).json({
-                    userId: user._id,
+                    userId: user.uuid,
                     token: jwt.sign(
-                        { userId: user._id },
-                        "secretsecret010101",
+                        { userId: user.uuid },
+                        process.env.RANDOM_TOKEN_SECRET,
                         { expiresIn: "24h"}
-                    )
+                    ),
+                    msg: 'connecté!'
                 });
             })
             .catch( error => res.status(500).json({ error }));
     })
     .catch( error => res.status(500).json({ error }));
+};
+
+exports.getUsers =  (req, res, next) => {
+    User.findAll({ include: 'posts' })
+    .then( users => res.status(200).json(users))
+    .catch( error => res.status(404).json({ error }));
+};
+
+exports.getUser =  (req, res, next) => {
+    const uuid = req.params.uuid
+    User.findOne({ 
+        where: { uuid },
+        include: 'posts'
+    })
+    .then(user => res.status(200).json(user))
+    .catch(error => res.status(404).json({ error }));
+};
+
+
+
+exports.updateUser = (req, res, next) => {
+    const uuid = req.params.uuid
+    User.findOne({ where: { uuid } })
+    .then(user => {
+        if( req.body.firstName){
+            user.firstName = req.body.firstName
+        }
+        if( req.body.lastName ){
+            user.lastName = req.body.lastName
+        }
+        if( req.body.email || req.body.email !== undefined ){
+        user.email = req.body.email
+        }
+            
+        user.save()
+        res.status(201).json({msg:"Profil Utilisateur modifié", user})
+    })
+        .catch(error => res.status(404).json({ error }));
+};
+
+exports.deleteUser = async (req, res) => {
+    const uuid = req.params.uuid
+    try {
+      const user = await User.findOne({ where: { uuid } })
+  
+      await user.destroy()
+  
+      return res.json({ message: 'Utilisateur Supprimmé!' })
+    } catch (err) {
+      console.log(err)
+      return res.status(500).json({ error: 'Une erreur est survenue' })
+    }
 };
