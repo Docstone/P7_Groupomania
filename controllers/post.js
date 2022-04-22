@@ -1,15 +1,5 @@
 const { Post, User } = require('../models');
 
-// exports.createPost =  (req, res, next) => {
-//     const  userUuid = req.body.userUuid
-//     const body  = req.body.body
-//      User.findOne({ where: { uuid: userUuid } }).then(user => {
-//        Post.create({ body, userId: user.id , userUuid: user.uuid})
-//      }).then(post=>{
-//       res.status(201).json(post)
-//      }).catch(error =>  res.status(500).json({ error }));
-// };
-
 exports.createPost = async (req, res) => {
   const uuid = req.body.userUuid
   const body = req.body.body
