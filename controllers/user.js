@@ -63,31 +63,39 @@ exports.getUser =  (req, res, next) => {
 
 
 
-exports.updateUser = (req, res, next) => {
+exports.updateUser = async (req, res, next) => {
     const uuid = req.params.uuid
-    User.findOne({ where: { uuid } })
-    .then(user => {
+    try{
+        const user = await User.findOne({ where: { uuid } })
+        if(!user) {
+            res.status(201).json({error:"Utilisateur introuvable"})
+        }
         if( req.body.firstName){
             user.firstName = req.body.firstName
         }
         if( req.body.lastName ){
             user.lastName = req.body.lastName
         }
-        if( req.body.email || req.body.email !== undefined ){
-        user.email = req.body.email
+        if( req.body.email && req.body.email !== undefined ){
+            user.email = req.body.email
         }
-            
+     
         user.save()
         res.status(201).json({msg:"Profil Utilisateur modifié", user})
-    })
-        .catch(error => res.status(404).json({ error }));
-};
+
+    }catch (err) {
+        console.log(err)
+        return res.status(500).json({ error: 'Une erreur est survenue' })
+      }
+  }
 
 exports.deleteUser = async (req, res) => {
     const uuid = req.params.uuid
     try {
       const user = await User.findOne({ where: { uuid } })
-  
+      if (!user) {
+        return res.status(404).json({error: "Utilisateur introuvable"})
+      }
       await user.destroy()
   
       return res.json({ message: 'Utilisateur Supprimmé!' })

@@ -55,9 +55,7 @@ exports.delete = async (req, res) => {
       if (!post) {
         return res.status(404).json({error: "Post introuvable"})
       }
-      if (post.user.uuid !== userId) {
-        return res.status(401).json({error: "Requete non autorisée"})
-      }
+     
       await post.destroy()
   
       return res.json({ message: 'Post Supprimmé!' })
